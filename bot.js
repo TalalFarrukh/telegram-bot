@@ -176,43 +176,6 @@ bot.onText(/\/list_alerts/, async (msg) => {
   }
 });
 
-bot.onText(/\/remove_alert (.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const alertId = match[1].trim();
-
-  // Check if the user is registered
-  const isRegistered = await isUserRegistered(userId);
-
-  if (!isRegistered) {
-    bot.sendMessage(chatId, "Please register first using /register.");
-    return;
-  }
-
-  // Delete the alert if it belongs to the user
-  try {
-    const res = await query(
-      "DELETE FROM alerts WHERE id = $1 AND user_id = $2 RETURNING *",
-      [alertId, userId]
-    );
-
-    if (res.rowCount === 0) {
-      bot.sendMessage(
-        chatId,
-        "No alert found with the given ID, or it doesn’t belong to you."
-      );
-    } else {
-      bot.sendMessage(
-        chatId,
-        `Alert with ID ${alertId} has been successfully removed.`
-      );
-    }
-  } catch (error) {
-    console.error("Error removing alert:", error);
-    bot.sendMessage(chatId, "Failed to remove the alert. Please try again.");
-  }
-});
-
 // Command to initiate the alert removal process
 bot.onText(/\/remove_alert/, async (msg) => {
   const chatId = msg.chat.id;
@@ -332,7 +295,14 @@ bot.on("message", async (msg) => {
     const isRegistered = await isUserRegistered(userId);
 
     if (isRegistered) {
-      bot.sendMessage(chatId, "Welcome! You can now interact with the bot.");
+        // Show available commands instead of a welcome message
+        const commandsMessage = `Here are the available commands:\n` +
+        `- /register: Register yourself with the bot.\n` +
+        `- /get_token: Get cryptocurrency data by token symbol.\n` +
+        `- /set_alert: Set a price alert for a token.\n` +
+        `- /list_alerts: List all your active price alerts.\n` +
+        `- /remove_alert: Remove an active alert by entering the alert ID.`;
+        bot.sendMessage(chatId, commandsMessage);
     } else {
       bot.sendMessage(chatId, "Please register first using /register.");
     }
